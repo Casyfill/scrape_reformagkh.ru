@@ -3,15 +3,13 @@ import requests as rq
 from lxml import html
 import pandas as pd
 
-from details import _parse_detailes
-# import bs4
+from details import _parse_detailes, ISSUES
 
+issues_path = 'data/issues.csv'
 BASE_URL = 'https://www.reformagkh.ru'
+
 # Хамовники
 tid = 2281058
-
-# def get_house_links():
-# sort=name&order=asc&page=1&limit=100
 
 
 def _get_last(dom):
@@ -36,7 +34,7 @@ def _parse_bld_row(bld):
     return d
 
 
-def main(tid):
+def main(tid, last_page=None):
     '''get building data
     for the particular level of data
     '''
@@ -51,7 +49,8 @@ def main(tid):
     r = s.get(url, params=params)
     # print r.url
     dom = html.fromstring(r.text)
-    last_page = _get_last(dom)
+    if last_page is None:
+        last_page = _get_last(dom)
 
     bldngs = []
     for page in xrange(1, last_page + 1):
@@ -83,7 +82,9 @@ if __name__ == '__main__':
     df = main(tid)
 
     df = scrape_details(df)
-    print df.head(10)
-
-    df.to_csv('Hamovniky.csv', encoding='utf8')
-    
+    print 'Issues occured for {} pages'.format(len(ISSUES))
+    if len(ISSUES) > 0:
+        pd.Series({'issues': ISSUES}).to_csv(issues_path)
+        print 'Stored issues in: {}'.format(issues_path)
+    df.to_hdf('data/Hamovniky_detailed.hdf', 'data')
+    df.to_csv('data/Hamovniky_detailed.csv', encoding='utf8')

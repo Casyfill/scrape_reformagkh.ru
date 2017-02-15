@@ -3,6 +3,8 @@ import requests as rq
 from lxml import html
 import time
 # import pandas as pd
+SLEEP = 8
+ISSUES = []
 
 
 def _process_pair(krow, vrow):
@@ -32,40 +34,63 @@ def _process_nested(row):
     try:
         key = row.xpath("./td/span/text()")[0]
     except:
-        key = None
+        key = '___'
     try:
         nested_table = row.xpath('./td/table/tbody')[0]
         result = _process_table(nested_table)
+        r = {'_'.join([key, k]): v for k, v in result.iteritems()}
+        return r
     except:
-        result = None
+        return None
 
-    return key, result
+
+def flattern_dict(data_dict):
+    '''flattern dictionary, one level deep'''
+    d = {}
+    for key in data_dict.keys():
+        if isinstance(data_dict[key], dict):
+            for inner_key in data_dict[key].keys():
+                print 'key:', key
+                new_key = '{0}_{1}'.format(key,
+                                           inner_key)
+                print 'new key:', new_key
+                d[new_key] = data_dict[key][new_key]
+        else:
+            d[key] = data_dict[key]
+    return d
 
 
 def _parse_detailes(url):
     '''parse detailed building information from the url'''
     print url
-    time.sleep(3)
-    page = rq.get(url)
-    page.raise_for_status()
-    dom = html.fromstring(page.text)
+    time.sleep(SLEEP)
+    try:
 
-    table = dom.xpath(
-        "//div[@class='numbered']/table[@class='col_list']/tbody")[0]
-    # the table is formated so that each odd row has class='left'
-    # and represent key,
-    # and each even one - value, except cases where row is nested
-    result = _process_table(table)
-    result['link'] = url
-    # one-level rows
-    nested_rows = table.xpath("./tr[descendant::td[@colspan=2]]")
-    for row in nested_rows:
-        # print row.text_content()
-        k, v = _process_nested(row)
-        if v is not None:
-            # for vk, vv in v.iteritems():
-                # print k, vk,':::', vv
-            result[k] = v
+        page = rq.get(url)
+        page.encoding = 'utf-8'
+        page.raise_for_status()
+        dom = html.fromstring(page.text)
 
+        table = dom.xpath(
+            "//div[@class='numbered']/table[@class='col_list']/tbody")[0]
+        # the table is formated so that each odd row has class='left'
+        # and represent key,
+        # and each even one - value, except cases where row is nested
+        result = _process_table(table)
+        result['link'] = url
+        # one-level rows
+        nested_rows = table.xpath("./tr[descendant::td[@colspan=2]]")
+        for row in nested_rows:
+            # print row.text_content()
+            v = _process_nested(row)
+            if v is not None:
+                for key, value in v.iteritems():
+                    result[key] = value
 
-    return result
+        return result
+
+    except Exception as inst:
+        print 'Error:',
+        print(inst)
+        ISSUES.append(url)
+        return None

@@ -1,2 +1,3 @@
-# scrape_roszkh
-scrape data from roszkh.ru for AUD
+# scrape_reforma_zkh.ru
+
+scrape data from reforma_zkh.ru [AUD example]
