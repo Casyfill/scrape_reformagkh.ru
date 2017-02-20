@@ -81,10 +81,12 @@ def scrape_details(df):
 if __name__ == '__main__':
     df = main(tid)
 
-    df = scrape_details(df)
-    print 'Issues occured for {} pages'.format(len(ISSUES))
-    if len(ISSUES) > 0:
-        pd.Series({'issues': ISSUES}).to_csv(issues_path)
-        print 'Stored issues in: {}'.format(issues_path)
-    df.to_hdf('data/Hamovniky_detailed.hdf', 'data')
-    df.to_csv('data/Hamovniky_detailed.csv', encoding='utf8')
+    for el in xrange(1, len(df)/100 + 1):
+	sdf = df.iloc[100*el:100*(el+1),:]
+    	sdf = scrape_details(sdf)
+    	print 'Issues occured at chunk {0} for {1} pages'.format(el, len(ISSUES))
+    	if len(ISSUES) > 0:
+        	pd.Series({'issues': ISSUES}).to_csv(issues_path)
+        	print 'Stored issues in: {}'.format(issues_path)
+    	#sdf.to_hdf('data/Hamovniky_detailed_{}.hdf'.format(el), 'data')
+    	sdf.to_csv('data/Hamovniky_detailed_{}.csv'.format(el), encoding='utf8')

@@ -3,7 +3,7 @@ import requests as rq
 from lxml import html
 import time
 # import pandas as pd
-SLEEP = 8
+SLEEP = 20
 ISSUES = []
 
 
